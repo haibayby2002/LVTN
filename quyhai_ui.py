@@ -272,12 +272,13 @@ class App(customtkinter.CTk):
             lat = float(self.lattitude_entry.get())
         except:
             messagebox.showerror("Unverified", "Please fill in the longitude and latitude in number or decimal format")
-            return None
+            return (-np.inf, -np.inf)
 
         return long, lat
 
     def export_csv_event(self):
         print(self.prop_export_file)
+
         if self.home_frame_poly_checkbox.get() == 0:
             pass
         else:
@@ -286,9 +287,15 @@ class App(customtkinter.CTk):
     def csv_frame_open_event(self):
         try:
             temp = fd.askdirectory(initialdir='./test_output')
-            print(temp)
-            self.prop_export_file = temp + self.csv_name_entry.get()
+            name = self.csv_name_entry.get()
+            if name == "":
+                messagebox.showerror("Lack of name", "Please type in csv name field before select folder")
+                return
+            if name[:-4] != ".csv":
+                name = name + ".csv"
+            self.prop_export_file = temp + "/" + name
             self.csv_frame_file_label.configure(text=self.prop_export_file)
+            print(self.prop_export_file)
         except:
             pass
         finally:
@@ -484,6 +491,7 @@ class DensityManagement:
 
     # endregion
 
+    # region Write CSV method
     def write_csv(self, path, long=0, lat=0, frame_interval = 30):
         with open(path, 'w') as csvfile:
             # Create a writer object
@@ -494,8 +502,7 @@ class DensityManagement:
             for val in self.val:
                 csvwriter.writerows(round(self.val,2))
 
-
-
+    # endregion
 
     # region Calculate
     def get_foreground_MOG2(self, frame):
