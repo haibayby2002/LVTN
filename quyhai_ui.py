@@ -148,9 +148,9 @@ class App(customtkinter.CTk):
 
         self.longtitude_entry = customtkinter.CTkEntry(self.export_csv_frame, width=200, placeholder_text="Longtitude")
         self.longtitude_entry.grid(row=3, column=0, padx=20, pady=(15, 15))
-        self.lattitude_entry = customtkinter.CTkEntry(self.export_csv_frame, width=200, show="*", placeholder_text="Lattitude")
+        self.lattitude_entry = customtkinter.CTkEntry(self.export_csv_frame, width=200, placeholder_text="Lattitude")
         self.lattitude_entry.grid(row=4, column=0, padx=20, pady=(0, 15))
-        self.export_csv_button = customtkinter.CTkButton(self.export_csv_frame, text="Export CSV", command=self.export_csv_event, width=200)
+        self.export_csv_button = customtkinter.CTkButton(self.export_csv_frame, text="Export CSV", command=self.export_csv_event)
         self.export_csv_button.grid(row=5, column=0, padx=20, pady=(15, 15))
         # endregion
 
@@ -276,14 +276,6 @@ class App(customtkinter.CTk):
 
         return long, lat
 
-    def export_csv_event(self):
-        print(self.prop_export_file)
-
-        if self.home_frame_poly_checkbox.get() == 0:
-            pass
-        else:
-            pass
-
     def csv_frame_open_event(self):
         try:
             temp = fd.askdirectory(initialdir='./test_output')
@@ -298,9 +290,23 @@ class App(customtkinter.CTk):
             print(self.prop_export_file)
         except:
             pass
-        finally:
-            if self.prop_import_file != "":
-                self.select_roi()
+
+    def export_csv_event(self):
+        print(self.prop_export_file)
+        long, lat = self.get_longitude_and_latitude()
+        print(long, lat)
+        if long == -np.inf:
+            return
+
+        # Rectangle
+        if self.home_frame_poly_checkbox.get() == 0:
+            self.dens.write_csv(self.prop_export_file, long=long, lat=lat, frame_interval=30)
+        else:
+            # Polygon
+            self.dens.write_csv_polygon(self.prop_export_file, long=long, lat=lat, frame_interval=30)
+            pass
+
+
 
     # endregion
 
@@ -425,8 +431,8 @@ class DensityManagement:
         # cv.destroyAllWindows()
 
     def analyze_polygon(self, frame_interval = 30):
-        print("analyze polygon")
-        print(self.roi)
+        # print("analyze polygon")
+        # print(self.roi)
         while self.cap.isOpened():
 
             self.frame_index = self.frame_index + 1
@@ -492,15 +498,88 @@ class DensityManagement:
     # endregion
 
     # region Write CSV method
-    def write_csv(self, path, long=0, lat=0, frame_interval = 30):
+    def write_csv(self, path, long=0, lat=0, frame_interval=30):
+        print("write csv rectangle")
         with open(path, 'w') as csvfile:
             # Create a writer object
             csvwriter = csv.writer(csvfile)
             # Write the fields and rows to the file
             csvwriter.writerow([long, lat])
-            csvwriter.writerows(self.fields)
-            for val in self.val:
-                csvwriter.writerows(round(self.val,2))
+            csvwriter.writerow(self.fields)
+
+            while self.cap.isOpened():
+                self.frame_index = self.frame_index + 1
+                row = [self.frame_index]
+                _, frame = self.cap.read()
+                frame = Utils.crop_img(frame, self.roi)
+                # cv.imshow('Video', frame)
+
+                # region Get background using KNN
+                kernel = np.ones((5, 5), np.uint8)
+                bg_mask = self.get_foreground_KNN(frame)
+                knn_val = self.calculate_density(bg_mask)
+                # cv.imshow('KNN', label_mask)
+                row.append(round(knn_val, 2))
+                # endregion
+
+                # region KNN morph
+                bg_mask = self.get_foreground_KNN(frame)
+                bg_mask = cv.morphologyEx(bg_mask, cv.MORPH_CLOSE, kernel)
+                knn_morph = self.calculate_density(bg_mask)
+                # cv.imshow('Extend', label2_mask)
+                row.append(round(knn_morph, 2))
+                # endregion
+
+                # region Mog2 Morph
+                bg_mask = self.get_foreground_MOG2(frame)
+                mog2_val = self.calculate_density(bg_mask)
+                # cv.imshow('MOG2', label_mask)
+                row.append(round(mog2_val, 2))
+                # endregion
+
+                # self.val.append(row)
+                if self.frame_index % frame_interval == 0:
+                    csvwriter.writerow(row)
+
+
+    def write_csv_polygon(self, path, long=0, lat=0, frame_interval=30):
+        print("write csv polygon")
+        with open(path, 'w') as csvfile:
+            # Create a writer object
+            csvwriter = csv.writer(csvfile)
+            # Write the fields and rows to the file
+            csvwriter.writerow([long, lat])
+            csvwriter.writerow(self.fields)
+            while self.cap.isOpened():
+
+                self.frame_index = self.frame_index + 1
+                row = [self.frame_index]
+                _, frame = self.cap.read()
+                frame = Utils.mask_img(frame, self.roi)
+                area = Utils.calculates_area(self.roi)
+
+                # region Get background using KNN
+                kernel = np.ones((5, 5), np.uint8)
+                bg_mask = self.get_foreground_KNN(frame)
+                knn_val = self.calculate_density(bg_mask, is_polygon=True)
+                row.append(round(knn_val, 2))
+                # endregion
+
+                # region KNN morph
+                bg_mask = self.get_foreground_KNN(frame)
+                bg_mask = cv.morphologyEx(bg_mask, cv.MORPH_CLOSE, kernel)
+                knn_morph = self.calculate_density(bg_mask, is_polygon=True)
+                row.append(round(knn_morph, 2))
+                # endregion
+
+                # region Mog2 Morph
+                bg_mask = self.get_foreground_MOG2(frame)
+                mog2_val = self.calculate_density(bg_mask, is_polygon=True)
+                row.append(round(mog2_val, 2))
+                # endregion
+
+                if self.frame_index % frame_interval == 0:
+                    csvwriter.writerow(row)
 
     # endregion
 
