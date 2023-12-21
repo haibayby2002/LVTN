@@ -37,7 +37,8 @@ class App(customtkinter.CTk):
         self.dens = ""
         self.mqtt_url = ""
 
-        self.cap = ""
+        self.cap = self.first_cap = ""
+        self.roi = ""
         # self.csv_frame_file_label = ""
         # endregion
 
@@ -241,7 +242,7 @@ class App(customtkinter.CTk):
         if self.home_frame_poly_checkbox.get():
             shape = Shape.get_roi(img)
 
-            roi = Utils.point2arr(shape.points)
+            roi = self.roi= Utils.point2arr(shape.points)
             # Todo: numpy, calculate area, mass with image
             # area = Utils.calculates_area(shape.points)
             area = Utils.calculates_area(roi)
@@ -250,11 +251,12 @@ class App(customtkinter.CTk):
             # dens.analyze()
 
         else:  # Rectangle
-            roi = cv.selectROI(img)
+            roi = self.roi= cv.selectROI(img)
             img = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 
             self.dens = DensityManagement(self.cap, roi)
-        self.home_frame_image_preview.configure(image=self.image_preview)
+
+        self.home_frame_image_preview.configure(image=self.image_preview)   # This line is form PIL
 
     def button_preview_event(self):
         if self.home_frame_poly_checkbox.get() == 0:
@@ -364,7 +366,11 @@ class DensityManagement:
         while self.cap.isOpened():
             self.frame_index = self.frame_index + 1
             row = [self.frame_index]
-            _, frame = self.cap.read()
+            ret, frame = self.cap.read()
+            if ret == False:
+                self.frame_index = 0
+                cv.VideoCapture.set(self.cap, cv.CAP_PROP_POS_AVI_RATIO, 0)
+                break
             frame = Utils.crop_img(frame, self.roi)
             cv.imshow('Video', frame)
 
@@ -424,11 +430,13 @@ class DensityManagement:
             if self.frame_index % frame_interval == 0:
                 print(row)
             if cv.waitKey(25) & 0xFF == ord('q'):
+                self.frame_index = 0
+                cv.VideoCapture.set(self.cap, cv.CAP_PROP_POS_AVI_RATIO, 0)
                 break
-
         # print(self.val)
         # self.cap.release()
         # cv.destroyAllWindows()
+        # self.cap.release()
 
     def analyze_polygon(self, frame_interval = 30):
         # print("analyze polygon")
@@ -437,7 +445,11 @@ class DensityManagement:
 
             self.frame_index = self.frame_index + 1
             row = [self.frame_index]
-            _, frame = self.cap.read()
+            ret, frame = self.cap.read()
+            if ret == False:
+                self.frame_index = 0
+                cv.VideoCapture.set(self.cap, cv.CAP_PROP_POS_AVI_RATIO, 0)
+                break
             frame = Utils.mask_img(frame, self.roi)
             cv.imshow('Video', frame)
             area = Utils.calculates_area(self.roi)
@@ -493,8 +505,10 @@ class DensityManagement:
             if self.frame_index % frame_interval == 0:
                 print(row)
             if cv.waitKey(25) & 0xFF == ord('q'):
+                self.frame_index = 0
+                cv.VideoCapture.set(self.cap, cv.CAP_PROP_POS_AVI_RATIO, 0)
                 break
-
+        # self.cap.release()
     # endregion
 
     # region Write CSV method
@@ -510,7 +524,11 @@ class DensityManagement:
             while self.cap.isOpened():
                 self.frame_index = self.frame_index + 1
                 row = [self.frame_index]
-                _, frame = self.cap.read()
+                ret, frame = self.cap.read()
+                if ret == False:
+                    self.frame_index = 0
+                    cv.VideoCapture.set(self.cap, cv.CAP_PROP_POS_AVI_RATIO, 0)
+                    return
                 frame = Utils.crop_img(frame, self.roi)
                 # cv.imshow('Video', frame)
 
@@ -541,6 +559,7 @@ class DensityManagement:
                 if self.frame_index % frame_interval == 0:
                     csvwriter.writerow(row)
 
+            # self.cap.release()
 
     def write_csv_polygon(self, path, long=0, lat=0, frame_interval=30):
         print("write csv polygon")
@@ -554,7 +573,11 @@ class DensityManagement:
 
                 self.frame_index = self.frame_index + 1
                 row = [self.frame_index]
-                _, frame = self.cap.read()
+                ret, frame = self.cap.read()
+                if ret == False:
+                    self.frame_index = 0
+                    cv.VideoCapture.set(self.cap, cv.CAP_PROP_POS_AVI_RATIO, 0)
+                    break
                 frame = Utils.mask_img(frame, self.roi)
                 area = Utils.calculates_area(self.roi)
 
@@ -580,7 +603,7 @@ class DensityManagement:
 
                 if self.frame_index % frame_interval == 0:
                     csvwriter.writerow(row)
-
+            # self.cap.release()
     # endregion
 
     # region Calculate
