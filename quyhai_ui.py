@@ -518,9 +518,9 @@ class DensityManagement:
             # Create a writer object
             csvwriter = csv.writer(csvfile)
             # Write the fields and rows to the file
-            csvwriter.writerow([long, lat])
-            csvwriter.writerow(self.fields)
-
+            # csvwriter.writerow([long, lat])
+            csvwriter.writerow(self.fields + ["longitude", "latitude"])
+            hasLocation = False
             while self.cap.isOpened():
                 self.frame_index = self.frame_index + 1
                 row = [self.frame_index]
@@ -555,8 +555,13 @@ class DensityManagement:
                 row.append(round(mog2_val, 2))
                 # endregion
 
+                if not hasLocation:
+                    row.append(long)
+                    row.append(lat)
+
                 # self.val.append(row)
                 if self.frame_index % frame_interval == 0:
+                    hasLocation = True
                     csvwriter.writerow(row)
 
             # self.cap.release()
@@ -567,8 +572,9 @@ class DensityManagement:
             # Create a writer object
             csvwriter = csv.writer(csvfile)
             # Write the fields and rows to the file
-            csvwriter.writerow([long, lat])
-            csvwriter.writerow(self.fields)
+            # csvwriter.writerow([long, lat])
+            csvwriter.writerow(self.fields + ["longitude", "latitude"])
+            hasLocation = False
             while self.cap.isOpened():
 
                 self.frame_index = self.frame_index + 1
@@ -601,7 +607,12 @@ class DensityManagement:
                 row.append(round(mog2_val, 2))
                 # endregion
 
+                if not hasLocation:
+                    row.append(long)
+                    row.append(lat)
+
                 if self.frame_index % frame_interval == 0:
+                    hasLocation = True
                     csvwriter.writerow(row)
             # self.cap.release()
     # endregion
