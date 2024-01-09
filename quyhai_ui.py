@@ -20,11 +20,11 @@ class AppConfig(object):
     organization = "BKU HCMUT"
     logo = "bku_logo.jpg"  # CustomTkinter_logo_single.png
     icon = {"video": "video-file-icon-28.png", "csv": "csv_icon.jpg"}
-    video_type = [("video", "avi"), ("video", "mp4")]
+    video_type = [("video", "avi"), ("video", "mp4"), ("video", "mkv")]
     csv_type = [("Comma Separated Value", "csv")]
 
-conf = AppConfig()
 
+conf = AppConfig()
 
 
 class App(customtkinter.CTk):
@@ -125,7 +125,8 @@ class App(customtkinter.CTk):
         self.home_frame_poly_checkbox = customtkinter.CTkCheckBox(self.home_frame, text="Cut Polygon")
         self.home_frame_poly_checkbox.grid(row=2, column=0, padx=20, pady=10)
 
-        self.home_frame_file_label = customtkinter.CTkLabel(self.home_frame, text=self.prop_import_file, compound="right")
+        self.home_frame_file_label = customtkinter.CTkLabel(self.home_frame, text=self.prop_import_file,
+                                                            compound="right")
         self.home_frame_file_label.grid(row=3, column=0, padx=20, pady=10)
 
         self.home_frame_button_open = customtkinter.CTkButton(self.home_frame, text="Preview",
@@ -141,26 +142,36 @@ class App(customtkinter.CTk):
         self.csv_name_entry.grid(row=0, column=0, padx=20, pady=(100, 15))
 
         self.csv_frame_button_open = customtkinter.CTkButton(self.export_csv_frame, text="Open Output Directory",
-                                                              command=self.csv_frame_open_event)
+                                                             command=self.csv_frame_open_event)
         self.csv_frame_button_open.grid(row=1, column=0, padx=20, pady=10)
 
-        self.csv_frame_file_label = customtkinter.CTkLabel(self.export_csv_frame, text=self.prop_export_file, compound="right")
+        self.csv_frame_file_label = customtkinter.CTkLabel(self.export_csv_frame, text=self.prop_export_file,
+                                                           compound="right")
         self.csv_frame_file_label.grid(row=2, column=0, padx=20, pady=10)
 
         self.longtitude_entry = customtkinter.CTkEntry(self.export_csv_frame, width=200, placeholder_text="Longtitude")
         self.longtitude_entry.grid(row=3, column=0, padx=20, pady=(15, 15))
         self.lattitude_entry = customtkinter.CTkEntry(self.export_csv_frame, width=200, placeholder_text="Lattitude")
         self.lattitude_entry.grid(row=4, column=0, padx=20, pady=(0, 15))
-        self.export_csv_button = customtkinter.CTkButton(self.export_csv_frame, text="Export CSV", command=self.export_csv_event)
-        self.export_csv_button.grid(row=5, column=0, padx=20, pady=(15, 15))
+
+        self.label_frame_interval = customtkinter.CTkLabel(self.export_csv_frame, width=200, text="Frame Interval")
+        self.label_frame_interval.grid(row=5, column=0, padx=20, pady=(0, 0))
+        self.frame_interval = customtkinter.CTkEntry(self.export_csv_frame, width=200)
+        self.frame_interval.insert(0, "30")
+        self.frame_interval.grid(row=6, column=0, padx=20, pady=(0, 15))
+
+        self.export_csv_button = customtkinter.CTkButton(self.export_csv_frame, text="Export CSV",
+                                                         command=self.export_csv_event)
+        self.export_csv_button.grid(row=7, column=0, padx=20, pady=(15, 15))
         # endregion
 
         # region create publish mqtt frame
         self.pub_mqtt_frame = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.pub_mqtt_frame.grid_columnconfigure(0, weight=1)
-        self.pub_mqtt_frame_button_open = customtkinter.CTkButton(self.pub_mqtt_frame, text="Open CSV File", image=self.csv_icon,
-                                                              command=self.button_csv_open_event)
-        self.pub_mqtt_frame_button_open.grid(row=0, column=0, padx=20, pady=(150,15))
+        self.pub_mqtt_frame_button_open = customtkinter.CTkButton(self.pub_mqtt_frame, text="Open CSV File",
+                                                                  image=self.csv_icon,
+                                                                  command=self.button_csv_open_event)
+        self.pub_mqtt_frame_button_open.grid(row=0, column=0, padx=20, pady=(150, 15))
 
         self.mqtt_frame_file_label = customtkinter.CTkLabel(self.pub_mqtt_frame, text=self.prop_import_file,
                                                             compound="right")
@@ -173,7 +184,7 @@ class App(customtkinter.CTk):
         self.topic_entry.grid(row=3, column=0, padx=20, pady=(0, 15))
 
         self.publish_button = customtkinter.CTkButton(self.pub_mqtt_frame, text="Publish",
-                                                         command=self.publish_mqtt_event, width=200)
+                                                      command=self.publish_mqtt_event, width=200)
         self.publish_button.grid(row=4, column=0, padx=20, pady=(15, 15))
         # endregion
 
@@ -201,7 +212,6 @@ class App(customtkinter.CTk):
         else:
             self.pub_mqtt_frame.grid_forget()
 
-
     def home_button_event(self):
         self.select_frame_by_name("home")
 
@@ -210,7 +220,6 @@ class App(customtkinter.CTk):
 
     def pub_mqtt_button_event(self):
         self.select_frame_by_name("pub_mqtt")
-
 
     def change_appearance_mode_event(self, new_appearance_mode):
         customtkinter.set_appearance_mode(new_appearance_mode)
@@ -242,7 +251,7 @@ class App(customtkinter.CTk):
         if self.home_frame_poly_checkbox.get():
             shape = Shape.get_roi(img)
 
-            roi = self.roi= Utils.point2arr(shape.points)
+            roi = self.roi = Utils.point2arr(shape.points)
             # Todo: numpy, calculate area, mass with image
             # area = Utils.calculates_area(shape.points)
             area = Utils.calculates_area(roi)
@@ -251,12 +260,12 @@ class App(customtkinter.CTk):
             # dens.analyze()
 
         else:  # Rectangle
-            roi = self.roi= cv.selectROI(img)
-            img = img[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
+            roi = self.roi = cv.selectROI(img)
+            img = img[int(roi[1]):int(roi[1] + roi[3]), int(roi[0]):int(roi[0] + roi[2])]
 
             self.dens = DensityManagement(self.cap, roi)
 
-        self.home_frame_image_preview.configure(image=self.image_preview)   # This line is form PIL
+        self.home_frame_image_preview.configure(image=self.image_preview)  # This line is form PIL
 
     def button_preview_event(self):
         if self.home_frame_poly_checkbox.get() == 0:
@@ -265,6 +274,7 @@ class App(customtkinter.CTk):
             # Todo: work from here
             self.dens.analyze_polygon()
             pass
+
     # endregion
 
     # region CSV event
@@ -277,6 +287,14 @@ class App(customtkinter.CTk):
             return (-np.inf, -np.inf)
 
         return long, lat
+
+    def get_frame_interval(self):
+        try:
+            frame_interval = int(self.frame_interval.get())
+        except:
+            messagebox.showerror("Unverified", "Please recheck frame interval entry")
+            return 0
+        return frame_interval
 
     def csv_frame_open_event(self):
         try:
@@ -296,19 +314,18 @@ class App(customtkinter.CTk):
     def export_csv_event(self):
         print(self.prop_export_file)
         long, lat = self.get_longitude_and_latitude()
+        frame_interval = self.get_frame_interval()
         print(long, lat)
         if long == -np.inf:
             return
 
         # Rectangle
         if self.home_frame_poly_checkbox.get() == 0:
-            self.dens.write_csv(self.prop_export_file, long=long, lat=lat, frame_interval=30)
+            self.dens.write_csv(self.prop_export_file, long=long, lat=lat, frame_interval=frame_interval)
         else:
             # Polygon
-            self.dens.write_csv_polygon(self.prop_export_file, long=long, lat=lat, frame_interval=30)
+            self.dens.write_csv_polygon(self.prop_export_file, long=long, lat=lat, frame_interval=frame_interval)
             pass
-
-
 
     # endregion
 
@@ -334,8 +351,8 @@ class App(customtkinter.CTk):
     def publish_csv(self, csv_file_name, broker_url, topic):
         pass
 
-
     # endregion
+
 
 class DensityManagement:
     def __init__(self, cap, roi, is_poly=False):
@@ -361,7 +378,7 @@ class DensityManagement:
         self.val = []
 
     # region Preview Analyze
-    def analyze(self, frame_interval = 30):
+    def analyze(self, frame_interval=30):
 
         while self.cap.isOpened():
             self.frame_index = self.frame_index + 1
@@ -406,7 +423,7 @@ class DensityManagement:
             row.append(round(knn_morph, 2))
             # endregion
 
-            #region Mog2 Morph
+            # region Mog2 Morph
             bg_mask = self.get_foreground_MOG2(frame)
             mog2_val = self.calculate_density(bg_mask)
             label_mask = cv.putText(
@@ -419,9 +436,7 @@ class DensityManagement:
                 thickness=2)
             cv.imshow('MOG2', label_mask)
             row.append(round(mog2_val, 2))
-            #endregion
-
-
+            # endregion
 
             # print('white: ', np.sum(bg_mask == 255))
             # print('black: ', np.sum(bg_mask == 0))
@@ -438,7 +453,7 @@ class DensityManagement:
         # cv.destroyAllWindows()
         # self.cap.release()
 
-    def analyze_polygon(self, frame_interval = 30):
+    def analyze_polygon(self, frame_interval=1):
         # print("analyze polygon")
         # print(self.roi)
         while self.cap.isOpened():
@@ -453,7 +468,6 @@ class DensityManagement:
             frame = Utils.mask_img(frame, self.roi)
             cv.imshow('Video', frame)
             area = Utils.calculates_area(self.roi)
-
 
             # region Get background using KNN
             kernel = np.ones((5, 5), np.uint8)
@@ -487,7 +501,7 @@ class DensityManagement:
             row.append(round(knn_morph, 2))
             # endregion
 
-            #region Mog2 Morph
+            # region Mog2 Morph
             bg_mask = self.get_foreground_MOG2(frame)
             mog2_val = self.calculate_density(bg_mask, is_polygon=True)
             label_mask = cv.putText(
@@ -500,7 +514,7 @@ class DensityManagement:
                 thickness=2)
             cv.imshow('MOG2', label_mask)
             row.append(round(mog2_val, 2))
-            #endregion
+            # endregion
 
             if self.frame_index % frame_interval == 0:
                 print(row)
@@ -509,6 +523,7 @@ class DensityManagement:
                 cv.VideoCapture.set(self.cap, cv.CAP_PROP_POS_AVI_RATIO, 0)
                 break
         # self.cap.release()
+
     # endregion
 
     # region Write CSV method
@@ -555,6 +570,9 @@ class DensityManagement:
                 row.append(round(mog2_val, 2))
                 # endregion
 
+                if self.frame_index < 3:
+                    continue
+
                 if not hasLocation:
                     row.append(long)
                     row.append(lat)
@@ -576,7 +594,6 @@ class DensityManagement:
             csvwriter.writerow(self.fields + ["longitude", "latitude"])
             hasLocation = False
             while self.cap.isOpened():
-
                 self.frame_index = self.frame_index + 1
                 row = [self.frame_index]
                 ret, frame = self.cap.read()
@@ -607,6 +624,9 @@ class DensityManagement:
                 row.append(round(mog2_val, 2))
                 # endregion
 
+                if self.frame_index < 3:
+                    continue
+
                 if not hasLocation:
                     row.append(long)
                     row.append(lat)
@@ -615,6 +635,7 @@ class DensityManagement:
                     hasLocation = True
                     csvwriter.writerow(row)
             # self.cap.release()
+
     # endregion
 
     # region Calculate
@@ -626,7 +647,7 @@ class DensityManagement:
         background = cv.GaussianBlur(frame, (7, 7), 0)
         return self.bg_sub_KNN.apply(background)
 
-    def calculate_density(self, frame, is_polygon = False):
+    def calculate_density(self, frame, is_polygon=False):
         if not is_polygon:
             white = np.sum(frame != 0)
             black = np.sum(frame == 0)
@@ -634,9 +655,11 @@ class DensityManagement:
         else:
             # print("Yolo")
             white = np.sum(frame != 0)
+            # print("white: ", white, "area: ", self.area)
             # return ("white: ", white, " area: ", self.area)
             return white / self.area
-    #endregion
+    # endregion
+
 
 if __name__ == "__main__":
     app = App()
