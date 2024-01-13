@@ -54,7 +54,7 @@ class App(customtkinter.CTk):
         image_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_images")
         self.initial_path = os.path.dirname(os.path.realpath(__file__))
         self.logo_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, conf.logo)), size=(26, 26))
-        self.image_preview = customtkinter.CTkImage(Image.open(os.path.join(image_path, "large_test_image.png")),
+        self.image_preview = customtkinter.CTkImage(Image.open(os.path.join(image_path, "image.jpg")),
                                                     size=(500, 150))
         self.image_icon_image = customtkinter.CTkImage(Image.open(os.path.join(image_path, "image_icon_light.png")),
                                                        size=(20, 20))
@@ -139,7 +139,7 @@ class App(customtkinter.CTk):
         self.export_csv_frame.grid_columnconfigure(0, weight=1)
 
         self.csv_name_entry = customtkinter.CTkEntry(self.export_csv_frame, placeholder_text="Name the file")
-        self.csv_name_entry.grid(row=0, column=0, padx=20, pady=(100, 15))
+        self.csv_name_entry.grid(row=0, column=0, padx=20, pady=(50, 15))
 
         self.csv_frame_button_open = customtkinter.CTkButton(self.export_csv_frame, text="Open Output Directory",
                                                              command=self.csv_frame_open_event)
@@ -388,7 +388,7 @@ class DensityManagement:
                 self.frame_index = 0
                 cv.VideoCapture.set(self.cap, cv.CAP_PROP_POS_AVI_RATIO, 0)
                 break
-            frame = Utils.crop_img(frame, self.roi)
+            frame = Utils.crop_img(frame, self.roi)     #Cut Roi
             cv.imshow('Video', frame)
 
             # region Get background using KNN
@@ -465,7 +465,7 @@ class DensityManagement:
                 self.frame_index = 0
                 cv.VideoCapture.set(self.cap, cv.CAP_PROP_POS_AVI_RATIO, 0)
                 break
-            frame = Utils.mask_img(frame, self.roi)
+            frame = Utils.mask_img(frame, self.roi)     # Cut roi
             cv.imshow('Video', frame)
             area = Utils.calculates_area(self.roi)
 
